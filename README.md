@@ -12,14 +12,14 @@
 
 ## Overview
 
-**sdim** is an R package for supervised dimension reduction for asset pricing and macro forecasting. It implements five factor extraction methods. PCA, PLS, and RRA take a multivariate target (T×N returns matrix) and a matrix of factor proxies. sPCA takes a univariate target and scales each proxy by its OLS slope on the target before extracting principal components. IPCA extracts latent factors from panel data using time-varying characteristics as instruments, estimated via alternating least squares (ALS). Performance of extracted factors can be evaluated with `eval_factors()`. The package ships with seven `he2023_*` datasets (factor proxies and portfolio returns) from the He et al. (2023, MS) replication package.
+**sdim** is an R package for supervised dimension reduction for asset pricing and macro forecasting. It implements five factor extraction methods. PCA, PLS, and RRA take a multivariate target (T×N returns matrix) and a matrix of factor proxies. sPCA takes a univariate target and scales each proxy by its OLS slope on the target before extracting principal components. IPCA extracts latent factors from panel data using time-varying characteristics as instruments, estimated via alternating least squares (ALS). Performance of extracted factors can be evaluated with `eval_factors()`. The package ships with seven `he2023_*` datasets (factor proxies and portfolio returns) from the He et al. (2023) replication package.
 
 ## Installation
 
 ```r
 # Install from GitHub (not yet on CRAN)
-# install.packages("pak")
-pak::pak("GabboCg/sdim")
+# install.packages("devtools")
+devtools::install_github("GabboCg/sdim")
 ```
 
 ## Methods
@@ -28,11 +28,11 @@ pak::pak("GabboCg/sdim")
 
 | Function | Method | Reference |
 |---|---|---|
-| `pca_est()` | Principal Component Analysis (PCA) | He et al. (2023, MS) |
-| `pls_est()` | Partial Least Squares (PLS) | He et al. (2023, MS) |
-| `rra_est()` | Reduced-Rank Approach (RRA) | He et al. (2023, MS) |
-| `spca_est()` | Scaled PCA (sPCA) | Huang et al. (2022, MS) |
-| `ipca_est()` | Instrumented PCA (IPCA) | Kelly, Pruitt & Su (2019, JFE) |
+| `pca_est()` | Principal Component Analysis (PCA) | He et al. (2023) |
+| `pls_est()` | Partial Least Squares (PLS) | He et al. (2023) |
+| `rra_est()` | Reduced-Rank Approach (RRA) | He et al. (2023) |
+| `spca_est()` | Scaled PCA (sPCA) | Huang et al. (2022) |
+| `ipca_est()` | Instrumented PCA (IPCA) | Kelly, Pruitt & Su (2019) |
 
 ## Usage
 

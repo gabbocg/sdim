@@ -14,22 +14,34 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette replicates the IP growth results from Table 4 of Huang,
-Jiang, Li, Tong, and Zhou (2022), "Scaled PCA: A New Approach to
-Dimension Reduction," _Management Science_, 68(3).
+This vignette reproduces the industrial-production (IP) growth column
+of Table 4 in Huang, Jiang, Li, Tong, and Zhou (2022), "Scaled PCA: A
+New Approach to Dimension Reduction," *Management Science*, 68(3). The
+exercise forecasts one-month-ahead IP growth using factors extracted
+from 123 transformed FRED-MD macro variables, and compares two
+dimension-reduction routes:
 
-The table reports out-of-sample $R^2_{OS}$ (%) of forecasting 1-month ahead
-IP growth using PCA and sPCA factors extracted from 123 FRED-MD macro
-variables. The benchmark is an AR model with SIC-selected lag order.
+- **PCA**, the standard principal-component factors of the predictor
+  matrix, which ignore the forecast target.
+- **sPCA**, the *scaled* variant introduced by Huang et al. (2022).
+  Before extracting components, each predictor is scaled by the OLS
+  slope from regressing the target on that predictor. Predictors with
+  stronger predictive content for the target receive larger weight; the
+  irrelevant ones get shrunk toward zero. PCA on the scaled predictors
+  therefore concentrates forecasting-relevant information into the
+  first few factors.
+
+The reported metric is the out-of-sample $R^2$, $R^2_{OS}$ (%),
+relative to an AR benchmark with SIC-selected lag order.
 
 ## Data
 
-The package includes the authors' original data:
+The package ships the authors' original data:
 
-- `huang2022_macro`: 720 × 123 matrix of transformed FRED-MD predictors
-  (January 1960 to December 2019).
-- `huang2022_ip`: 720-vector of monthly IP growth (log-difference of IP
-  index).
+- `huang2022_macro`: a $720 \times 123$ matrix of transformed FRED-MD
+  predictors (January 1960 to December 2019).
+- `huang2022_ip`: a 720-vector of monthly IP growth (log-differences of
+  the IP index).
 
 ```{r}
 library(sdim)
@@ -43,27 +55,42 @@ length(huang2022_ip)
 
 ## Methodology
 
-The out-of-sample exercise uses an expanding window:
+The forecasting exercise is an expanding-window pseudo out-of-sample
+experiment that mirrors the paper:
 
-- **Initial estimation window**: January 1960 to December 1984 (300 months).
-- **Out-of-sample period**: January 1985 to December 2019 (420 months).
-- **Benchmark**: AR model with lag order selected by SIC (max lag = 1).
-- **Factor models**: ARDL model with AR lags + 1 lag of PCA/sPCA factors.
+- **Initial estimation window**: January 1960 to December 1984 (300
+  observations).
+- **Out-of-sample period**: January 1985 to December 2019 (420
+  forecasts).
+- **Benchmark**: AR with lag order chosen by SIC (maximum lag 1).
+- **Factor models**: ARDL with the AR lags plus one lag of the PCA or
+  sPCA factors.
 
-For sPCA, the scaling regression uses the predictive relationship
-$y_{t+1} ~ X_{i,t}$, and absolute slopes are winsorized at the 90th
-percentile. The `spca_est()` function supports this directly: when
-`length(target) < nrow(X)`, the first `length(target)` rows are used for
-the scaling regression while all rows of `X` are standardized and used
-for factor extraction.
+For sPCA, the scaling regression uses the *predictive* alignment
+$y_{t+1} \sim X_{i,t}$ — that is, today's predictor is regressed on
+next month's target. To dampen extreme slopes the absolute scaling
+coefficients are winsorised at the 90th percentile, matching the
+authors' MATLAB code. `spca_est()` supports this directly: when
+`length(target) < nrow(X)`, the first `length(target)` rows are used
+for the scaling regression while *all* rows of `X` are standardised and
+used for factor extraction. This is what makes the predictive
+alignment possible without losing observations from the factor panel.
 
 ## Out-of-sample loop
 
-The `run_oos()` function uses `select_ar_lag_sic()`,
-`estimate_ar_res()`, and `estimate_ardl_multi()` for the AR benchmark
-and ARDL forecasting model, and `pca_est()` / `spca_est()` with
-`predict()` for factor extraction. The loop runs ~420 iterations and
-takes several minutes.
+The function below runs the recursive forecast. At each step it:
+
+1. selects an AR lag order via `select_ar_lag_sic()` and produces the
+   AR-only forecast;
+2. extracts up to `nfac_max` PCA factors from the standardised
+   predictors and up to `nfac_max` sPCA factors with the predictive
+   alignment and winsorisation just described;
+3. builds an ARDL forecast for each number of factors using both factor
+   sets, with the AR coefficients estimated jointly via
+   `estimate_ardl_multi()`.
+
+The loop runs ~420 iterations and takes a few minutes, so it is set to
+`eval = FALSE` here:
 
 ```{r, eval = FALSE}
 run_oos <- function(y, Z, h = 1, p_max = 1, nfac_max = 5) {
@@ -128,13 +155,13 @@ run_oos <- function(y, Z, h = 1, p_max = 1, nfac_max = 5) {
       for (jj in 1:2) {
 
         z_f <- if (jj == 1) {
-          
+
           z_pc_n[, 1:cc, drop = FALSE]
 
         } else {
-            
+
           z_trans_n[, 1:cc, drop = FALSE]
-            
+
         }
 
         p_ardl <- c(p_ar, 1)
@@ -175,7 +202,7 @@ run_oos <- function(y, Z, h = 1, p_max = 1, nfac_max = 5) {
   }
 
   data.frame(K = seq_len(nfac_max), PCA = round(r2_pca, 2), sPCA = round(r2_spca, 2))
-  
+
 }
 
 # Run
@@ -196,30 +223,31 @@ Running the code above produces:
   5  7.88 13.17
 ```
 
-With 5 factors, PCA achieves $R^2_{OS}$ = **7.88%** and sPCA achieves
-$R^2_OS$ = **13.17%** — both matching the paper exactly. The sPCA
-consistently outperforms PCA across all factor counts, confirming
-that scaling predictors by their target-predictive slopes concentrates
-forecasting-relevant information into the first few factors.
+With five factors, PCA reaches $R^2_{OS}$ = **7.88%** and sPCA reaches
+$R^2_{OS}$ = **13.17%** — both matching the paper to two decimals. sPCA
+dominates PCA at every factor count, which is precisely the result the
+paper highlights: when many candidate predictors are weak or
+irrelevant, weighting each one by its target-predictive slope lets PCA
+focus on the components that actually carry forecasting power.
 
 ## Key `spca_est()` features used
 
-1. **Predictive alignment**: passing a shorter `target` (T-1 elements)
-   with the full `X` (T rows) ensures the scaling regression uses the
-   predictive relationship $y_{t+1} ~ X_{i,t}$ while factors are
-   extracted from the full training window.
+1. **Predictive alignment**. Passing a `target` that is one observation
+   shorter than `X` (i.e. $T-1$ versus $T$) makes the scaling regression
+   pair $X_{i,t}$ with $y_{t+1}$, while factors are still extracted
+   from the full $T$-row predictor matrix.
 
-2. **Winsorization**: `winsorize = TRUE` with `winsor_probs = c(0, 90)`
-   caps extreme scaling coefficients at the 90th percentile, matching
-   the authors' MATLAB implementation.
+2. **Winsorisation**. `winsorize = TRUE` with `winsor_probs = c(0, 90)`
+   caps the absolute scaling slopes at their 90th percentile,
+   reproducing the trimming used in the authors' MATLAB code.
 
-3. **`predict()`**: projects the full training `X` onto the estimated
-   sPCA loadings, correctly applying the training-window standardization
-   and scaling.
+3. **`predict()`**. Projects the training `X` onto the estimated sPCA
+   loadings using the training-window standardisation and scaling, so
+   in-sample and out-of-sample factor draws are constructed
+   consistently.
 
 ## References
 
-Huang, D., Jiang, F., Li, K., Tong, G., and Zhou, G. (2022).
-Scaled PCA: A New Approach to Dimension Reduction.
-_Management Science_, 68(3), 1678--1695.
-DOI: [10.1287/mnsc.2021.4020](https://doi.org/10.1287/mnsc.2021.4020)
+Huang, D., Jiang, F., Li, K., Tong, G., and Zhou, G. (2022). Scaled
+PCA: A New Approach to Dimension Reduction. *Management Science*,
+68(3), 1678--1695.

@@ -1,32 +1,52 @@
 # IPCA with the Grunfeld dataset
 
-This vignette demonstrates the IPCA estimator using the Grunfeld (1958)
-investment dataset, a classic panel of 11 US firms observed over 20
-years (1935–1954). Results are validated against the Python `ipca`
-package (Kelly, Pruitt, and Su, 2019).
+This vignette walks through
+[`ipca_est()`](https://gabbocg.github.io/sdim/reference/ipca_est.md) on
+the Grunfeld (1958) investment panel: 11 US firms observed annually from
+1935 to 1954. The dataset is small, balanced, and has only two
+characteristics, which makes it useful as a check that the R
+implementation matches the Python `ipca` package of Kelly, Pruitt, and
+Su (2019). The IPCA estimator was developed for asset returns, but the
+algorithm only needs a panel and a set of observable instruments, so the
+investment-on-fundamentals example serves as a transparent reference
+case.
 
 ## The IPCA model
 
-Instrumented PCA extracts latent factors from panel data where
-asset-specific characteristics serve as instruments. The model is
+Instrumented Principal Components Analysis (IPCA) extracts latent
+factors from a panel by letting observable, asset-specific
+characteristics act as instruments for otherwise-unobservable
+conditional loadings. Without that link the loadings have to be either
+pre-specified or estimated as free parameters; IPCA instead ties them to
+data the researcher already has.
 
-\\r\_{i,t} = \mathbf{z}\_{i,t}^\top \mathbf{\Gamma} \mathbf{f}\_t +
-\varepsilon\_{i,t}\\
+In the version used here (no intercept, no anomaly term) the model is
 
-where \\r\_{i,t}\\ is the return (here, investment) of asset \\i\\ at
-time \\t\\, \\\mathbf{z}\_{i,t}\\ is an \\L\\-vector of characteristics,
-\\\mathbf{\Gamma}\\ is the \\L \times K\\ matrix of characteristic
-loadings, and \\\mathbf{f}\_t\\ is the \\K\\-vector of latent factors.
+\\r\_{i,t} = \mathbf{z}\_{i,t}^\top \mathbf{\Gamma}\_{\\\beta}\\
+\mathbf{f}\_t + \varepsilon\_{i,t},\\
 
-Estimation alternates between solving for \\\mathbf{f}\_t\\ given
-\\\mathbf{\Gamma}\\ and updating \\\mathbf{\Gamma}\\ given
-\\\mathbf{f}\_t\\ (ALS), with an SVD normalization step to ensure
-\\\mathbf{\Gamma}^\top \mathbf{\Gamma} = \mathbf{I}\_K\\.
+where \\r\_{i,t}\\ is the outcome of unit \\i\\ at time \\t\\ (gross
+investment, in the Grunfeld example), \\\mathbf{z}\_{i,t}\\ is the
+\\L\\-vector of observable characteristics,
+\\\mathbf{\Gamma}\_{\\\beta}\\ is the \\L \times K\\ matrix that maps
+characteristics into factor loadings, and \\\mathbf{f}\_t\\ is the
+\\K\\-vector of latent factors. The unit-specific, time-varying loading
+is therefore \\\beta\_{i,t} = \mathbf{z}\_{i,t}^\top
+\mathbf{\Gamma}\_{\\\beta}\\, i.e. a linear projection of
+characteristics onto the \\K\\-dimensional factor space.
+
+Estimation alternates between two ordinary-least-squares steps: solve
+for \\\mathbf{f}\_t\\ given \\\mathbf{\Gamma}\_{\\\beta}\\, then update
+\\\mathbf{\Gamma}\_{\\\beta}\\ given \\\mathbf{f}\_t\\. After each pass
+the solution is rotated by an SVD so that
+\\\mathbf{\Gamma}\_{\\\beta}^\top \mathbf{\Gamma}\_{\\\beta} =
+\mathbf{I}\_K\\, which fixes the otherwise-arbitrary scaling and
+rotation of the factors.
 
 ## Data preparation
 
 The Grunfeld dataset ships with **sdim**. The dependent variable is
-gross investment (`invest`) and the two characteristics are market value
+gross investment (`invest`); the two characteristics are market value
 (`value`) and capital stock (`capital`).
 
 ``` r
@@ -44,8 +64,10 @@ str(grunfeld)
 ```
 
 [`ipca_est()`](https://gabbocg.github.io/sdim/reference/ipca_est.md)
-expects a \\T \times N\\ return matrix and a \\T \times N \times L\\
-characteristics array:
+expects a \\T \times N\\ outcome matrix and a \\T \times N \times L\\
+characteristics array. The loop below reshapes the long panel into that
+wide form, keeping the year and firm labels on the margins so the output
+is easy to read back:
 
 ``` r
 
@@ -59,12 +81,12 @@ Z   <- array(NA_real_, dim = c(TT, N, 2),
              dimnames = list(years, firms, c("value", "capital")))
 
 for (i in seq_along(firms)) {
-  
+
   idx <- grunfeld$firm == firms[i]
   ret[, i]  <- grunfeld$invest[idx]
   Z[, i, 1] <- grunfeld$value[idx]
   Z[, i, 2] <- grunfeld$capital[idx]
-  
+
 }
 
 cat("ret:", nrow(ret), "x", ncol(ret), "\n")
@@ -75,7 +97,9 @@ cat("Z:  ", paste(dim(Z), collapse = " x "), "\n")
 
 ## Fitting IPCA
 
-Extract one latent factor:
+We start with a single latent factor. With \\K = 1\\ the loadings
+\\\beta\_{i,t}\\ are a single linear combination of `value` and
+`capital`, and \\f_t\\ is one common time-series:
 
 ``` r
 
@@ -105,18 +129,19 @@ summary(fit)
 #> Var. expl. (%) 100.000
 ```
 
-The returned object contains the characteristic loadings
-(\\\mathbf{\Gamma}\\, stored as `lambda`) and the estimated factors:
+The returned object stores the characteristic loadings
+(\\\mathbf{\Gamma}\_{\\\beta}\\, named `lambda`) and the estimated
+factor path:
 
 ``` r
 
-# Gamma: how each characteristic maps to the factor
+# How each characteristic maps onto the factor
 fit$lambda
 #>           [,1]
 #> [1,] 0.9916601
 #> [2,] 0.1288805
 
-# Factors over time
+# Factor realisations over time
 data.frame(year = years, factor = fit$factors[, 1])
 #>    year     factor
 #> 1  1935 0.10319684
@@ -143,9 +168,10 @@ data.frame(year = years, factor = fit$factors[, 1])
 
 ## Validation against the Python `ipca` package
 
-The Python `ipca` package implements the same ALS algorithm using the
-Grunfeld dataset as its example. With `n_factors = 1` and no intercept,
-the Python output is:
+The Python `ipca` package uses the same Grunfeld panel as its built-in
+example and runs the identical alternating-least-squares algorithm. With
+one factor and no intercept it reports the following loadings and factor
+path, which we hard-code below as a reference:
 
 ``` r
 
@@ -158,19 +184,19 @@ py_factors <- c(
 )
 ```
 
-Compare loadings and factors (sign-aligned):
+Factors are identified only up to sign, so before comparing we flip the
+R output if the loading vectors are negatively correlated:
 
 ``` r
 
 r_gamma <- as.numeric(fit$lambda)
 r_factors <- as.numeric(fit$factors)
 
-# Sign-align if needed
 if (cor(r_gamma, py_gamma) < 0) {
 
   r_gamma   <- -r_gamma
   r_factors <- -r_factors
-  
+
 }
 
 cat("Gamma max |diff|:  ", sprintf("%.2e", max(abs(r_gamma - py_gamma))), "\n")
@@ -181,10 +207,14 @@ cat("Factor correlation:", sprintf("%.10f", cor(r_factors, py_factors)), "\n")
 #> Factor correlation: 1.0000000000
 ```
 
+The maximum absolute differences are at numerical-tolerance levels and
+the factor correlation is one to ten decimals.
+
 ## Multiple factors
 
-IPCA can also extract more than one factor. With \\K = 2\\ (both
-characteristics contribute their own factor dimension):
+The same call extracts more factors by increasing `nfac`. With \\K = 2\\
+each characteristic effectively contributes its own factor dimension
+(since there are only two instruments):
 
 ``` r
 
@@ -215,5 +245,4 @@ Ph.D. thesis, Department of Economics, University of Chicago.
 
 Kelly, B. T., Pruitt, S., and Su, Y. (2019). Characteristics are
 Covariances: A Unified Model of Risk and Return. *Journal of Financial
-Economics*, 134(3), 501–524. DOI:
-[10.1016/j.jfineco.2019.05.001](https://doi.org/10.1016/j.jfineco.2019.05.001)
+Economics*, 134(3), 501–524.

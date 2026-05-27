@@ -18,8 +18,8 @@
     }
   };
 </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
@@ -79,23 +79,39 @@
 
     
     
-<p>This vignette replicates the IP growth results from Table 4 of Huang,
-Jiang, Li, Tong, and Zhou (2022), “Scaled PCA: A New Approach to
-Dimension Reduction,” <em>Management Science</em>, 68(3).</p>
-<p>The table reports out-of-sample <span class="math inline">\(R^2_{OS}\)</span> (%) of forecasting 1-month ahead
-IP growth using PCA and sPCA factors extracted from 123 FRED-MD macro
-variables. The benchmark is an AR model with SIC-selected lag order.</p>
+<p>This vignette reproduces the industrial-production (IP) growth column
+of Table 4 in Huang, Jiang, Li, Tong, and Zhou (2022), “Scaled PCA: A
+New Approach to Dimension Reduction,” <em>Management Science</em>,
+68(3). The exercise forecasts one-month-ahead IP growth using factors
+extracted from 123 transformed FRED-MD macro variables, and compares two
+dimension-reduction routes:</p>
+<ul>
+<li>
+<strong>PCA</strong>, the standard principal-component factors of
+the predictor matrix, which ignore the forecast target.</li>
+<li>
+<strong>sPCA</strong>, the <em>scaled</em> variant introduced by
+Huang et al. (2022). Before extracting components, each predictor is
+scaled by the OLS slope from regressing the target on that predictor.
+Predictors with stronger predictive content for the target receive
+larger weight; the irrelevant ones get shrunk toward zero. PCA on the
+scaled predictors therefore concentrates forecasting-relevant
+information into the first few factors.</li>
+</ul>
+<p>The reported metric is the out-of-sample <span class="math inline">\(R^2\)</span>, <span class="math inline">\(R^2_{OS}\)</span> (%), relative to an AR benchmark
+with SIC-selected lag order.</p>
 <div class="section level2">
 <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
 </h2>
-<p>The package includes the authors’ original data:</p>
+<p>The package ships the authors’ original data:</p>
 <ul>
 <li>
-<code>huang2022_macro</code>: 720 × 123 matrix of transformed
-FRED-MD predictors (January 1960 to December 2019).</li>
+<code>huang2022_macro</code>: a <span class="math inline">\(720
+\times 123\)</span> matrix of transformed FRED-MD predictors (January
+1960 to December 2019).</li>
 <li>
-<code>huang2022_ip</code>: 720-vector of monthly IP growth
-(log-difference of IP index).</li>
+<code>huang2022_ip</code>: a 720-vector of monthly IP growth
+(log-differences of the IP index).</li>
 </ul>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gabbocg.github.io/sdim/">sdim</a></span><span class="op">)</span></span>
@@ -111,39 +127,50 @@ FRED-MD predictors (January 1960 to December 2019).</li>
 <div class="section level2">
 <h2 id="methodology">Methodology<a class="anchor" aria-label="anchor" href="#methodology"></a>
 </h2>
-<p>The out-of-sample exercise uses an expanding window:</p>
+<p>The forecasting exercise is an expanding-window pseudo out-of-sample
+experiment that mirrors the paper:</p>
 <ul>
 <li>
 <strong>Initial estimation window</strong>: January 1960 to December
-1984 (300 months).</li>
+1984 (300 observations).</li>
 <li>
 <strong>Out-of-sample period</strong>: January 1985 to December 2019
-(420 months).</li>
+(420 forecasts).</li>
 <li>
-<strong>Benchmark</strong>: AR model with lag order selected by SIC
-(max lag = 1).</li>
+<strong>Benchmark</strong>: AR with lag order chosen by SIC (maximum
+lag 1).</li>
 <li>
-<strong>Factor models</strong>: ARDL model with AR lags + 1 lag of
-PCA/sPCA factors.</li>
+<strong>Factor models</strong>: ARDL with the AR lags plus one lag
+of the PCA or sPCA factors.</li>
 </ul>
-<p>For sPCA, the scaling regression uses the predictive relationship
-<span class="math inline">\(y_{t+1} ~ X_{i,t}\)</span>, and absolute
-slopes are winsorized at the 90th percentile. The
-<code><a href="../reference/spca_est.html">spca_est()</a></code> function supports this directly: when
+<p>For sPCA, the scaling regression uses the <em>predictive</em>
+alignment <span class="math inline">\(y_{t+1} \sim X_{i,t}\)</span> —
+that is, today’s predictor is regressed on next month’s target. To
+dampen extreme slopes the absolute scaling coefficients are winsorised
+at the 90th percentile, matching the authors’ MATLAB code.
+<code><a href="../reference/spca_est.html">spca_est()</a></code> supports this directly: when
 <code>length(target) &lt; nrow(X)</code>, the first
 <code>length(target)</code> rows are used for the scaling regression
-while all rows of <code>X</code> are standardized and used for factor
-extraction.</p>
+while <em>all</em> rows of <code>X</code> are standardised and used for
+factor extraction. This is what makes the predictive alignment possible
+without losing observations from the factor panel.</p>
 </div>
 <div class="section level2">
 <h2 id="out-of-sample-loop">Out-of-sample loop<a class="anchor" aria-label="anchor" href="#out-of-sample-loop"></a>
 </h2>
-<p>The <code>run_oos()</code> function uses
-<code><a href="../reference/select_ar_lag_sic.html">select_ar_lag_sic()</a></code>, <code><a href="../reference/estimate_ar_res.html">estimate_ar_res()</a></code>, and
-<code><a href="../reference/estimate_ardl_multi.html">estimate_ardl_multi()</a></code> for the AR benchmark and ARDL
-forecasting model, and <code><a href="../reference/pca_est.html">pca_est()</a></code> / <code><a href="../reference/spca_est.html">spca_est()</a></code>
-with <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> for factor extraction. The loop runs ~420
-iterations and takes several minutes.</p>
+<p>The function below runs the recursive forecast. At each step it:</p>
+<ol style="list-style-type: decimal">
+<li>selects an AR lag order via <code><a href="../reference/select_ar_lag_sic.html">select_ar_lag_sic()</a></code> and
+produces the AR-only forecast;</li>
+<li>extracts up to <code>nfac_max</code> PCA factors from the
+standardised predictors and up to <code>nfac_max</code> sPCA factors
+with the predictive alignment and winsorisation just described;</li>
+<li>builds an ARDL forecast for each number of factors using both factor
+sets, with the AR coefficients estimated jointly via
+<code><a href="../reference/estimate_ardl_multi.html">estimate_ardl_multi()</a></code>.</li>
+</ol>
+<p>The loop runs ~420 iterations and takes a few minutes, so it is set
+to <code>eval = FALSE</code> here:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">run_oos</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">y</span>, <span class="va">Z</span>, <span class="va">h</span> <span class="op">=</span> <span class="fl">1</span>, <span class="va">p_max</span> <span class="op">=</span> <span class="fl">1</span>, <span class="va">nfac_max</span> <span class="op">=</span> <span class="fl">5</span><span class="op">)</span> <span class="op">{</span></span>
 <span></span>
@@ -207,13 +234,13 @@ iterations and takes several minutes.</p>
 <span>      <span class="kw">for</span> <span class="op">(</span><span class="va">jj</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">)</span> <span class="op">{</span></span>
 <span></span>
 <span>        <span class="va">z_f</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">jj</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span> <span class="op">{</span></span>
-<span>          </span>
+<span></span>
 <span>          <span class="va">z_pc_n</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="va">cc</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
 <span></span>
 <span>        <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>            </span>
+<span></span>
 <span>          <span class="va">z_trans_n</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="va">cc</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
-<span>            </span>
+<span></span>
 <span>        <span class="op">}</span></span>
 <span></span>
 <span>        <span class="va">p_ardl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">p_ar</span>, <span class="fl">1</span><span class="op">)</span></span>
@@ -254,7 +281,7 @@ iterations and takes several minutes.</p>
 <span>  <span class="op">}</span></span>
 <span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>K <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">nfac_max</span><span class="op">)</span>, PCA <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">r2_pca</span>, <span class="fl">2</span><span class="op">)</span>, sPCA <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">r2_spca</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span>  </span>
+<span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Run</span></span>
@@ -271,28 +298,32 @@ iterations and takes several minutes.</p>
   3  8.22 11.09
   4  7.99 11.97
   5  7.88 13.17</code></pre>
-<p>With 5 factors, PCA achieves <span class="math inline">\(R^2_{OS}\)</span> = <strong>7.88%</strong> and
-sPCA achieves <span class="math inline">\(R^2_OS\)</span> =
-<strong>13.17%</strong> — both matching the paper exactly. The sPCA
-consistently outperforms PCA across all factor counts, confirming that
-scaling predictors by their target-predictive slopes concentrates
-forecasting-relevant information into the first few factors.</p>
+<p>With five factors, PCA reaches <span class="math inline">\(R^2_{OS}\)</span> = <strong>7.88%</strong> and
+sPCA reaches <span class="math inline">\(R^2_{OS}\)</span> =
+<strong>13.17%</strong> — both matching the paper to two decimals. sPCA
+dominates PCA at every factor count, which is precisely the result the
+paper highlights: when many candidate predictors are weak or irrelevant,
+weighting each one by its target-predictive slope lets PCA focus on the
+components that actually carry forecasting power.</p>
 </div>
 <div class="section level2">
 <h2 id="key-spca_est-features-used">Key <code>spca_est()</code> features used<a class="anchor" aria-label="anchor" href="#key-spca_est-features-used"></a>
 </h2>
 <ol style="list-style-type: decimal">
-<li><p><strong>Predictive alignment</strong>: passing a shorter
-<code>target</code> (T-1 elements) with the full <code>X</code> (T rows)
-ensures the scaling regression uses the predictive relationship <span class="math inline">\(y_{t+1} ~ X_{i,t}\)</span> while factors are
-extracted from the full training window.</p></li>
-<li><p><strong>Winsorization</strong>: <code>winsorize = TRUE</code>
-with <code>winsor_probs = c(0, 90)</code> caps extreme scaling
-coefficients at the 90th percentile, matching the authors’ MATLAB
-implementation.</p></li>
-<li><p><strong><code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code></strong>: projects the full
-training <code>X</code> onto the estimated sPCA loadings, correctly
-applying the training-window standardization and scaling.</p></li>
+<li><p><strong>Predictive alignment</strong>. Passing a
+<code>target</code> that is one observation shorter than <code>X</code>
+(i.e. <span class="math inline">\(T-1\)</span> versus <span class="math inline">\(T\)</span>) makes the scaling regression pair
+<span class="math inline">\(X_{i,t}\)</span> with <span class="math inline">\(y_{t+1}\)</span>, while factors are still
+extracted from the full <span class="math inline">\(T\)</span>-row
+predictor matrix.</p></li>
+<li><p><strong>Winsorisation</strong>. <code>winsorize = TRUE</code>
+with <code>winsor_probs = c(0, 90)</code> caps the absolute scaling
+slopes at their 90th percentile, reproducing the trimming used in the
+authors’ MATLAB code.</p></li>
+<li><p><strong><code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code></strong>. Projects the training
+<code>X</code> onto the estimated sPCA loadings using the
+training-window standardisation and scaling, so in-sample and
+out-of-sample factor draws are constructed consistently.</p></li>
 </ol>
 </div>
 <div class="section level2">
@@ -300,7 +331,7 @@ applying the training-window standardization and scaling.</p></li>
 </h2>
 <p>Huang, D., Jiang, F., Li, K., Tong, G., and Zhou, G. (2022). Scaled
 PCA: A New Approach to Dimension Reduction. <em>Management Science</em>,
-68(3), 1678–1695. DOI: <a href="https://doi.org/10.1287/mnsc.2021.4020" class="external-link">10.1287/mnsc.2021.4020</a></p>
+68(3), 1678–1695.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

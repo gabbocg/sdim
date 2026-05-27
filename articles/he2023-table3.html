@@ -18,8 +18,8 @@
     }
   };
 </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
@@ -79,28 +79,71 @@
 
     
     
-<p>This vignette replicates Table 3 from He, Huang, Li, and Zhou (2023),
+<p>This vignette reproduces Table 3 of He, Huang, Li, and Zhou (2023),
 “Shrinking Factor Dimension: A Reduced-Rank Approach,” <em>Management
-Science</em>, 69(9).</p>
-<p>The table reports the total adjusted <span class="math inline">\(R^2\)</span> (%) of pricing 48 Fama-French
-value-weighted industry portfolios using factors extracted by four
-methods: the Fama-French factors directly (FF), PCA, PLS, and RRA.</p>
+Science</em>, 69(9). The table compares four ways of summarising a large
+set of candidate factor proxies down to a few risk factors that price
+the 48 Fama-French value-weighted industry portfolios. Performance is
+measured by the total adjusted <span class="math inline">\(R^2\)</span>
+(%) of the pricing regressions.</p>
+<p>The four methods are:</p>
+<ul>
+<li>
+<strong>FF</strong>: use the Fama-French five factors plus momentum
+directly, taking the first <span class="math inline">\(K\)</span> of
+them.</li>
+<li>
+<strong>PCA</strong>: extract the <span class="math inline">\(K\)</span> principal components that maximise the
+variance of the factor-proxy matrix <span class="math inline">\(G\)</span>.</li>
+<li>
+<strong>PLS</strong>: extract the <span class="math inline">\(K\)</span> components of <span class="math inline">\(G\)</span> that are most predictive of the
+test-asset returns.</li>
+<li>
+<strong>RRA</strong>: the reduced-rank approach of He et al. (2023).
+It searches for <span class="math inline">\(K\)</span> linear
+combinations of the proxies in <span class="math inline">\(G\)</span>
+whose loadings best explain the returns of the basis assets. Formally,
+the loading matrix in the regression of returns on proxies is restricted
+to rank <span class="math inline">\(K\)</span>, and that restriction is
+what shrinks <span class="math inline">\(L \approx 70\)</span> proxies
+down to a handful of usable factors.</li>
+</ul>
+<p>The motivation is empirical: many candidate factors have been
+proposed in the literature, but most carry little incremental pricing
+information once one accounts for the others. RRA is designed to find
+the small linear subspace that retains the pricing-relevant content.</p>
 <div class="section level2">
 <h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
 </h2>
+<p>The bundled <code>he2023_*</code> datasets come from the authors’
+replication package. The factor proxies in <code>he2023_factors</code>
+end twelve months earlier than the portfolio panels, so we slice the
+rows to align them and convert percentages to decimals. Returns are
+taken in excess of the one-month Treasury bill rate <code>RF</code>:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gabbocg.github.io/sdim/">sdim</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Align dates: he2023_factors ends 12 months earlier than portfolio datasets</span></span>
 <span><span class="va">he2023_ff48</span> <span class="op">&lt;-</span> <span class="va">he2023_ff48vw</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">516</span>, <span class="op">-</span><span class="fl">1</span><span class="op">]</span> <span class="op">/</span> <span class="fl">100</span> <span class="op">-</span> <span class="va">he2023_ff5</span><span class="op">$</span><span class="va">RF</span><span class="op">[</span><span class="fl">127</span><span class="op">:</span><span class="fl">642</span><span class="op">]</span> <span class="op">/</span> <span class="fl">100</span></span>
 <span><span class="va">G</span> <span class="op">&lt;-</span> <span class="va">he2023_factors</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">516</span>, <span class="op">-</span><span class="fl">1</span><span class="op">]</span> <span class="op">/</span> <span class="fl">100</span></span>
 <span></span>
-<span><span class="co"># First 6 columns are Fama-French 5 + momentum</span></span>
+<span><span class="co"># First 6 columns of G are Fama-French 5 + momentum</span></span>
 <span><span class="va">f5</span> <span class="op">&lt;-</span> <span class="va">G</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="replication">Replication<a class="anchor" aria-label="anchor" href="#replication"></a>
 </h2>
+<p>We loop over the same factor counts as the paper. For each <span class="math inline">\(K\)</span>:</p>
+<ul>
+<li>the <strong>FF</strong> row uses the first <span class="math inline">\(K\)</span> of the six Fama-French/momentum factors
+directly (only defined for <span class="math inline">\(K \le
+6\)</span>);</li>
+<li>the <strong>PCA</strong>, <strong>PLS</strong>, and
+<strong>RRA</strong> rows fit the corresponding <code>*_est()</code>
+function on the full proxy set <span class="math inline">\(G\)</span>,
+then pass the extracted factors to <code><a href="../reference/eval_factors.html">eval_factors()</a></code> to get
+the total adjusted <span class="math inline">\(R^2\)</span> on the test
+assets:</li>
+</ul>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nfact</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">5</span>, <span class="fl">6</span>, <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="va">methods</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"FF"</span>, <span class="st">"PCA"</span>, <span class="st">"PLS"</span>, <span class="st">"RRA"</span><span class="op">)</span></span>
@@ -116,7 +159,7 @@ methods: the Fama-French factors directly (FF), PCA, PLS, and RRA.</p>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="va">k</span> <span class="op">&lt;=</span> <span class="fl">6</span><span class="op">)</span> <span class="op">{</span></span>
 <span></span>
 <span>    <span class="va">total_r2</span><span class="op">[</span><span class="st">"FF"</span>, <span class="va">j</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/eval_factors.html">eval_factors</a></span><span class="op">(</span><span class="va">he2023_ff48</span>, <span class="va">f5</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="va">k</span><span class="op">]</span><span class="op">)</span><span class="op">[</span><span class="st">"TotalR2"</span><span class="op">]</span></span>
-<span>    </span>
+<span></span>
 <span>  <span class="op">}</span></span>
 <span></span>
 <span>  <span class="va">fit_pca</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pca_est.html">pca_est</a></span><span class="op">(</span>target <span class="op">=</span> <span class="va">he2023_ff48</span>, X <span class="op">=</span> <span class="va">G</span>, nfac <span class="op">=</span> <span class="va">k</span><span class="op">)</span></span>
@@ -140,17 +183,19 @@ methods: the Fama-French factors directly (FF), PCA, PLS, and RRA.</p>
 <span><span class="co">#&gt; PCA     16.74     20.49     29.91     33.13      40.78</span></span>
 <span><span class="co">#&gt; PLS     23.42     47.19     58.97     61.10      64.28</span></span>
 <span><span class="co">#&gt; RRA     54.60     61.11     64.75     65.38      67.40</span></span></code></pre></div>
-<p>The RRA consistently achieves the highest total <span class="math inline">\(R^2\)</span> across all factor counts, confirming
-the main finding of He et al. (2023): the reduced-rank approach
-effectively shrinks factor dimension while retaining pricing
-information.</p>
+<p>RRA delivers the highest total adjusted <span class="math inline">\(R^2\)</span> at every factor count. This is the
+headline finding of He et al. (2023): once we look for factors that are
+constructed <em>to price</em> the basis assets — rather than factors
+that maximise own-variance (PCA) or predictive covariance with returns
+one column at a time (PLS) — a small number of linear combinations of
+the 70 proxies recovers nearly all the pricing information.</p>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<p>He, J., Huang, J., Li, F., and Zhou, G. (2023). Shrinking Factor
-Dimension: A Reduced-Rank Approach. <em>Management Science</em>, 69(9).
-DOI: <a href="https://doi.org/10.1287/mnsc.2022.4563" class="external-link">10.1287/mnsc.2022.4563</a></p>
+<p>He, A., Huang, D., Li, J., and Zhou, G. (2023). Shrinking Factor
+Dimension: A Reduced-Rank Approach. <em>Management Science</em>, 69(9),
+5501–5522.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

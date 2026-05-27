@@ -18,8 +18,8 @@
     }
   };
 </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
@@ -79,31 +79,51 @@
 
     
     
-<p>This vignette demonstrates the IPCA estimator using the Grunfeld
-(1958) investment dataset, a classic panel of 11 US firms observed over
-20 years (1935–1954). Results are validated against the Python
-<code>ipca</code> package (Kelly, Pruitt, and Su, 2019).</p>
+<p>This vignette walks through <code><a href="../reference/ipca_est.html">ipca_est()</a></code> on the Grunfeld
+(1958) investment panel: 11 US firms observed annually from 1935 to
+1954. The dataset is small, balanced, and has only two characteristics,
+which makes it useful as a check that the R implementation matches the
+Python <code>ipca</code> package of Kelly, Pruitt, and Su (2019). The
+IPCA estimator was developed for asset returns, but the algorithm only
+needs a panel and a set of observable instruments, so the
+investment-on-fundamentals example serves as a transparent reference
+case.</p>
 <div class="section level2">
 <h2 id="the-ipca-model">The IPCA model<a class="anchor" aria-label="anchor" href="#the-ipca-model"></a>
 </h2>
-<p>Instrumented PCA extracts latent factors from panel data where
-asset-specific characteristics serve as instruments. The model is</p>
+<p>Instrumented Principal Components Analysis (IPCA) extracts latent
+factors from a panel by letting observable, asset-specific
+characteristics act as instruments for otherwise-unobservable
+conditional loadings. Without that link the loadings have to be either
+pre-specified or estimated as free parameters; IPCA instead ties them to
+data the researcher already has.</p>
+<p>In the version used here (no intercept, no anomaly term) the model
+is</p>
 <p><span class="math display">\[r_{i,t} = \mathbf{z}_{i,t}^\top
-\mathbf{\Gamma} \mathbf{f}_t + \varepsilon_{i,t}\]</span></p>
-<p>where <span class="math inline">\(r_{i,t}\)</span> is the return
-(here, investment) of asset <span class="math inline">\(i\)</span> at
-time <span class="math inline">\(t\)</span>, <span class="math inline">\(\mathbf{z}_{i,t}\)</span> is an <span class="math inline">\(L\)</span>-vector of characteristics, <span class="math inline">\(\mathbf{\Gamma}\)</span> is the <span class="math inline">\(L \times K\)</span> matrix of characteristic
-loadings, and <span class="math inline">\(\mathbf{f}_t\)</span> is the
-<span class="math inline">\(K\)</span>-vector of latent factors.</p>
-<p>Estimation alternates between solving for <span class="math inline">\(\mathbf{f}_t\)</span> given <span class="math inline">\(\mathbf{\Gamma}\)</span> and updating <span class="math inline">\(\mathbf{\Gamma}\)</span> given <span class="math inline">\(\mathbf{f}_t\)</span> (ALS), with an SVD
-normalization step to ensure <span class="math inline">\(\mathbf{\Gamma}^\top \mathbf{\Gamma} =
-\mathbf{I}_K\)</span>.</p>
+\mathbf{\Gamma}_{\!\beta}\, \mathbf{f}_t
+          + \varepsilon_{i,t},\]</span></p>
+<p>where <span class="math inline">\(r_{i,t}\)</span> is the outcome of
+unit <span class="math inline">\(i\)</span> at time <span class="math inline">\(t\)</span> (gross investment, in the Grunfeld
+example), <span class="math inline">\(\mathbf{z}_{i,t}\)</span> is the
+<span class="math inline">\(L\)</span>-vector of observable
+characteristics, <span class="math inline">\(\mathbf{\Gamma}_{\!\beta}\)</span> is the <span class="math inline">\(L \times K\)</span> matrix that maps
+characteristics into factor loadings, and <span class="math inline">\(\mathbf{f}_t\)</span> is the <span class="math inline">\(K\)</span>-vector of latent factors. The
+unit-specific, time-varying loading is therefore <span class="math inline">\(\beta_{i,t} = \mathbf{z}_{i,t}^\top
+\mathbf{\Gamma}_{\!\beta}\)</span>, i.e. a linear projection of
+characteristics onto the <span class="math inline">\(K\)</span>-dimensional factor space.</p>
+<p>Estimation alternates between two ordinary-least-squares steps: solve
+for <span class="math inline">\(\mathbf{f}_t\)</span> given <span class="math inline">\(\mathbf{\Gamma}_{\!\beta}\)</span>, then update
+<span class="math inline">\(\mathbf{\Gamma}_{\!\beta}\)</span> given
+<span class="math inline">\(\mathbf{f}_t\)</span>. After each pass the
+solution is rotated by an SVD so that <span class="math inline">\(\mathbf{\Gamma}_{\!\beta}^\top
+\mathbf{\Gamma}_{\!\beta} = \mathbf{I}_K\)</span>, which fixes the
+otherwise-arbitrary scaling and rotation of the factors.</p>
 </div>
 <div class="section level2">
 <h2 id="data-preparation">Data preparation<a class="anchor" aria-label="anchor" href="#data-preparation"></a>
 </h2>
 <p>The Grunfeld dataset ships with <strong>sdim</strong>. The dependent
-variable is gross investment (<code>invest</code>) and the two
+variable is gross investment (<code>invest</code>); the two
 characteristics are market value (<code>value</code>) and capital stock
 (<code>capital</code>).</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -118,8 +138,11 @@ characteristics are market value (<code>value</code>) and capital stock
 <span><span class="co">#&gt;  $ value  : num  30.3 43.9 107 68.3 84.2 ...</span></span>
 <span><span class="co">#&gt;  $ capital: num  52 52.9 54.5 59.7 61.7 ...</span></span></code></pre></div>
 <p><code><a href="../reference/ipca_est.html">ipca_est()</a></code> expects a <span class="math inline">\(T
-\times N\)</span> return matrix and a <span class="math inline">\(T
-\times N \times L\)</span> characteristics array:</p>
+\times N\)</span> outcome matrix and a <span class="math inline">\(T
+\times N
+\times L\)</span> characteristics array. The loop below reshapes the
+long panel into that wide form, keeping the year and firm labels on the
+margins so the output is easy to read back:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">firms</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">grunfeld</span><span class="op">$</span><span class="va">firm</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">years</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">grunfeld</span><span class="op">$</span><span class="va">year</span><span class="op">)</span><span class="op">)</span></span>
@@ -131,12 +154,12 @@ characteristics are market value (<code>value</code>) and capital stock
 <span>             dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">years</span>, <span class="va">firms</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"capital"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">firms</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  </span>
+<span></span>
 <span>  <span class="va">idx</span> <span class="op">&lt;-</span> <span class="va">grunfeld</span><span class="op">$</span><span class="va">firm</span> <span class="op">==</span> <span class="va">firms</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
 <span>  <span class="va">ret</span><span class="op">[</span>, <span class="va">i</span><span class="op">]</span>  <span class="op">&lt;-</span> <span class="va">grunfeld</span><span class="op">$</span><span class="va">invest</span><span class="op">[</span><span class="va">idx</span><span class="op">]</span></span>
 <span>  <span class="va">Z</span><span class="op">[</span>, <span class="va">i</span>, <span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">grunfeld</span><span class="op">$</span><span class="va">value</span><span class="op">[</span><span class="va">idx</span><span class="op">]</span></span>
 <span>  <span class="va">Z</span><span class="op">[</span>, <span class="va">i</span>, <span class="fl">2</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">grunfeld</span><span class="op">$</span><span class="va">capital</span><span class="op">[</span><span class="va">idx</span><span class="op">]</span></span>
-<span>  </span>
+<span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"ret:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">ret</span><span class="op">)</span>, <span class="st">"x"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">ret</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
@@ -147,7 +170,8 @@ characteristics are market value (<code>value</code>) and capital stock
 <div class="section level2">
 <h2 id="fitting-ipca">Fitting IPCA<a class="anchor" aria-label="anchor" href="#fitting-ipca"></a>
 </h2>
-<p>Extract one latent factor:</p>
+<p>We start with a single latent factor. With <span class="math inline">\(K = 1\)</span> the loadings <span class="math inline">\(\beta_{i,t}\)</span> are a single linear
+combination of <code>value</code> and <code>capital</code>, and <span class="math inline">\(f_t\)</span> is one common time-series:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ipca_est.html">ipca_est</a></span><span class="op">(</span><span class="va">ret</span>, <span class="va">Z</span>, nfac <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
@@ -173,16 +197,16 @@ characteristics are market value (<code>value</code>) and capital stock
 <span><span class="co">#&gt;                     F1</span></span>
 <span><span class="co">#&gt; Eigenvalue       0.019</span></span>
 <span><span class="co">#&gt; Var. expl. (%) 100.000</span></span></code></pre></div>
-<p>The returned object contains the characteristic loadings (<span class="math inline">\(\mathbf{\Gamma}\)</span>, stored as
-<code>lambda</code>) and the estimated factors:</p>
+<p>The returned object stores the characteristic loadings (<span class="math inline">\(\mathbf{\Gamma}_{\!\beta}\)</span>, named
+<code>lambda</code>) and the estimated factor path:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Gamma: how each characteristic maps to the factor</span></span>
+<code class="sourceCode R"><span><span class="co"># How each characteristic maps onto the factor</span></span>
 <span><span class="va">fit</span><span class="op">$</span><span class="va">lambda</span></span>
 <span><span class="co">#&gt;           [,1]</span></span>
 <span><span class="co">#&gt; [1,] 0.9916601</span></span>
 <span><span class="co">#&gt; [2,] 0.1288805</span></span>
 <span></span>
-<span><span class="co"># Factors over time</span></span>
+<span><span class="co"># Factor realisations over time</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="va">years</span>, factor <span class="op">=</span> <span class="va">fit</span><span class="op">$</span><span class="va">factors</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    year     factor</span></span>
 <span><span class="co">#&gt; 1  1935 0.10319684</span></span>
@@ -209,9 +233,10 @@ characteristics are market value (<code>value</code>) and capital stock
 <div class="section level2">
 <h2 id="validation-against-the-python-ipca-package">Validation against the Python <code>ipca</code> package<a class="anchor" aria-label="anchor" href="#validation-against-the-python-ipca-package"></a>
 </h2>
-<p>The Python <code>ipca</code> package implements the same ALS
-algorithm using the Grunfeld dataset as its example. With
-<code>n_factors = 1</code> and no intercept, the Python output is:</p>
+<p>The Python <code>ipca</code> package uses the same Grunfeld panel as
+its built-in example and runs the identical alternating-least-squares
+algorithm. With one factor and no intercept it reports the following
+loadings and factor path, which we hard-code below as a reference:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">py_gamma</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.99166014</span>, <span class="fl">0.12888046</span><span class="op">)</span></span>
 <span><span class="va">py_factors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
@@ -220,17 +245,17 @@ algorithm using the Grunfeld dataset as its example. With
 <span>  <span class="fl">0.1087561863</span>, <span class="fl">0.1357521189</span>, <span class="fl">0.1579348267</span>, <span class="fl">0.1660545375</span>, <span class="fl">0.1484923276</span>,</span>
 <span>  <span class="fl">0.1586634303</span>, <span class="fl">0.1596007400</span>, <span class="fl">0.1759379247</span>, <span class="fl">0.1921695585</span>, <span class="fl">0.2111065868</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Compare loadings and factors (sign-aligned):</p>
+<p>Factors are identified only up to sign, so before comparing we flip
+the R output if the loading vectors are negatively correlated:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r_gamma</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">lambda</span><span class="op">)</span></span>
 <span><span class="va">r_factors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">factors</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Sign-align if needed</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">r_gamma</span>, <span class="va">py_gamma</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
 <span></span>
 <span>  <span class="va">r_gamma</span>   <span class="op">&lt;-</span> <span class="op">-</span><span class="va">r_gamma</span></span>
 <span>  <span class="va">r_factors</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="va">r_factors</span></span>
-<span>  </span>
+<span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Gamma max |diff|:  "</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%.2e"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">r_gamma</span> <span class="op">-</span> <span class="va">py_gamma</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
@@ -239,12 +264,16 @@ algorithm using the Grunfeld dataset as its example. With
 <span><span class="co">#&gt; Factor max |diff|:  4.99e-11</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Factor correlation:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%.10f"</span>, <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">r_factors</span>, <span class="va">py_factors</span><span class="op">)</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Factor correlation: 1.0000000000</span></span></code></pre></div>
+<p>The maximum absolute differences are at numerical-tolerance levels
+and the factor correlation is one to ten decimals.</p>
 </div>
 <div class="section level2">
 <h2 id="multiple-factors">Multiple factors<a class="anchor" aria-label="anchor" href="#multiple-factors"></a>
 </h2>
-<p>IPCA can also extract more than one factor. With <span class="math inline">\(K = 2\)</span> (both characteristics contribute
-their own factor dimension):</p>
+<p>The same call extracts more factors by increasing <code>nfac</code>.
+With <span class="math inline">\(K = 2\)</span> each characteristic
+effectively contributes its own factor dimension (since there are only
+two instruments):</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ipca_est.html">ipca_est</a></span><span class="op">(</span><span class="va">ret</span>, <span class="va">Z</span>, nfac <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit2</span><span class="op">)</span></span>
@@ -272,7 +301,7 @@ their own factor dimension):</p>
 Ph.D. thesis, Department of Economics, University of Chicago.</p>
 <p>Kelly, B. T., Pruitt, S., and Su, Y. (2019). Characteristics are
 Covariances: A Unified Model of Risk and Return. <em>Journal of
-Financial Economics</em>, 134(3), 501–524. DOI: <a href="https://doi.org/10.1016/j.jfineco.2019.05.001" class="external-link">10.1016/j.jfineco.2019.05.001</a></p>
+Financial Economics</em>, 134(3), 501–524.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

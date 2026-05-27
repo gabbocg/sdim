@@ -17,15 +17,15 @@ least squares (ALS). Performance of extracted factors can be evaluated
 with
 [`eval_factors()`](https://gabbocg.github.io/sdim/reference/eval_factors.md).
 The package ships with seven `he2023_*` datasets (factor proxies and
-portfolio returns) from the He et al. (2023, MS) replication package.
+portfolio returns) from the He et al. (2023) replication package.
 
 ## Installation
 
 ``` r
 
 # Install from GitHub (not yet on CRAN)
-# install.packages("pak")
-pak::pak("GabboCg/sdim")
+# install.packages("devtools")
+devtools::install_github("GabboCg/sdim")
 ```
 
 ## Methods
@@ -34,11 +34,11 @@ pak::pak("GabboCg/sdim")
 
 | Function | Method | Reference |
 |----|----|----|
-| [`pca_est()`](https://gabbocg.github.io/sdim/reference/pca_est.md) | Principal Component Analysis (PCA) | He et al. (2023, MS) |
-| [`pls_est()`](https://gabbocg.github.io/sdim/reference/pls_est.md) | Partial Least Squares (PLS) | He et al. (2023, MS) |
-| [`rra_est()`](https://gabbocg.github.io/sdim/reference/rra_est.md) | Reduced-Rank Approach (RRA) | He et al. (2023, MS) |
-| [`spca_est()`](https://gabbocg.github.io/sdim/reference/spca_est.md) | Scaled PCA (sPCA) | Huang et al. (2022, MS) |
-| [`ipca_est()`](https://gabbocg.github.io/sdim/reference/ipca_est.md) | Instrumented PCA (IPCA) | Kelly, Pruitt & Su (2019, JFE) |
+| [`pca_est()`](https://gabbocg.github.io/sdim/reference/pca_est.md) | Principal Component Analysis (PCA) | He et al. (2023) |
+| [`pls_est()`](https://gabbocg.github.io/sdim/reference/pls_est.md) | Partial Least Squares (PLS) | He et al. (2023) |
+| [`rra_est()`](https://gabbocg.github.io/sdim/reference/rra_est.md) | Reduced-Rank Approach (RRA) | He et al. (2023) |
+| [`spca_est()`](https://gabbocg.github.io/sdim/reference/spca_est.md) | Scaled PCA (sPCA) | Huang et al. (2022) |
+| [`ipca_est()`](https://gabbocg.github.io/sdim/reference/ipca_est.md) | Instrumented PCA (IPCA) | Kelly, Pruitt & Su (2019) |
 
 ## Usage
 

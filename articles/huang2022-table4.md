@@ -1,10 +1,9 @@
 # Replicating Huang et al. (2022)
 
 This vignette reproduces the industrial-production (IP) growth column of
-Table 4 in Huang, Jiang, Li, Tong, and Zhou (2022), “Scaled PCA: A New
-Approach to Dimension Reduction,” *Management Science*, 68(3). The
-exercise forecasts one-month-ahead IP growth using factors extracted
-from 123 transformed FRED-MD macro variables, and compares two
+Table 4 in Huang, Jiang, Li, Tong, and Zhou (2022). The exercise
+forecasts one-month-ahead IP growth using factors extracted from 123
+transformed FRED-MD macro variables, and compares two
 dimension-reduction routes:
 
 - **PCA**, the standard principal-component factors of the predictor

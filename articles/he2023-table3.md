@@ -1,11 +1,10 @@
 # Replicating He et al. (2023)
 
-This vignette reproduces Table 3 of He, Huang, Li, and Zhou (2023),
-“Shrinking Factor Dimension: A Reduced-Rank Approach,” *Management
-Science*, 69(9). The table compares four ways of summarising a large set
-of candidate factor proxies down to a few risk factors that price the 48
-Fama-French value-weighted industry portfolios. Performance is measured
-by the total adjusted \\R^2\\ (%) of the pricing regressions.
+This vignette reproduces Table 3 of He, Huang, Li, and Zhou (2023). The
+table compares four ways of summarising a large set of candidate factor
+proxies down to a few risk factors that price the 48 Fama-French
+value-weighted industry portfolios. Performance is measured by the total
+adjusted \\R^2\\ (%) of the pricing regressions.
 
 The four methods are:
 

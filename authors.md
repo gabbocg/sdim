@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/GabboCg/sdim/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/gabbocg/sdim/blob/main/DESCRIPTION)
 
 Cabrera G (2026). *sdim: An R Package for Supervised Dimension
 Reduction*. R package version 0.1.0, <https://gabbocg.github.io/sdim/>.

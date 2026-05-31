@@ -1,13 +1,13 @@
 # sdim <img src="man/figures/logo.png" align="right" height="138" />
 
-**Author:** [Gabriel Cabrera](https://github.com/GabboCg)<br>
+**Author:** [Gabriel Cabrera](https://github.com/gabbocg)<br>
 **License:** [MIT](https://opensource.org/licenses/MIT) + file [LICENSE](LICENSE)
 
 <!-- badges: start -->
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![R-CMD-check](https://github.com/GabboCg/sdim/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/GabboCg/sdim/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/gabbocg/sdim/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gabbocg/sdim/actions/workflows/R-CMD-check.yaml)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![pkgdown](https://github.com/GabboCg/sdim/actions/workflows/pkgdown.yaml/badge.svg)](https://gabbocg.github.io/sdim/)
+[![pkgdown](https://github.com/gabbocg/sdim/actions/workflows/pkgdown.yaml/badge.svg)](https://gabbocg.github.io/sdim/)
 <!-- badges: end -->
 
 ## Overview
@@ -19,7 +19,7 @@
 ```r
 # Install from GitHub (not yet on CRAN)
 # install.packages("devtools")
-devtools::install_github("GabboCg/sdim")
+devtools::install_github("gabbocg/sdim")
 ```
 
 ## Methods
@@ -148,7 +148,7 @@ summary(fit_spca)
 
 ## Getting help
 
-If you encounter a bug, please file an issue with a minimal reproducible example on [GitHub](https://github.com/GabboCg/sdim/issues). For questions, email gabriel.cabreraguzman@postgrad.manchester.ac.uk.
+If you encounter a bug, please file an issue with a minimal reproducible example on [GitHub](https://github.com/gabbocg/sdim/issues). For questions, email gabriel.cabreraguzman@postgrad.manchester.ac.uk.
 
 ## References
 

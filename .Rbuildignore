@@ -6,3 +6,5 @@
 ^docs$
 ^pkgdown$
 ^CLAUDE\.md$
+^LICENSE\.md$
+^refs$

@@ -10,8 +10,7 @@ vector of dates in \code{YYYYMM} format (196001 to 201912).
 }
 \source{
 Replication package of Huang, Jiang, Li, Tong, and Zhou (2022),
-  available at
-  \url{https://pubsonline.informs.org/doi/10.1287/mnsc.2021.4020}.
+  \doi{10.1287/mnsc.2021.4020}.
 }
 \usage{
 huang2022_ip

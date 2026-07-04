@@ -19,6 +19,7 @@ URL: https://gabbocg.github.io/sdim/, https://github.com/gabbocg/sdim
 BugReports: https://github.com/gabbocg/sdim/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
+Language: en-GB
 LazyData: true
 Depends: R (>= 4.1.0)
 Imports: stats, graphics, Rcpp

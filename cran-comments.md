@@ -6,8 +6,14 @@ extraction methods for asset pricing and macroeconomic forecasting.
 ## Test environments
 
 * Local macOS 15.7 (aarch64-apple-darwin), R 4.5.1
-* win-builder (R-devel, R-release)
-* R-hub: Ubuntu (R-devel), Windows (R-devel), Fedora (R-devel with clang)
+* GitHub Actions (R-CMD-check): macOS-latest (R-release),
+  windows-latest (R-release), ubuntu-latest (R-devel, R-release,
+  R-oldrel-1)
+* R-hub v2 (GitHub Actions): Linux, Windows, macOS
+
+Note: win-builder was unreachable at the time of submission
+(FTP timeouts); Windows R-devel coverage is provided by R-hub v2
+and R-CMD-check on windows-latest.
 
 ## R CMD check results
 

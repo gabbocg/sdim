@@ -25,8 +25,7 @@ The `"dates"` attribute is an integer vector of dates in `YYYYMM` format
 ## Source
 
 Replication package of Huang, Jiang, Li, Tong, and Zhou (2022),
-available at
-<https://pubsonline.informs.org/doi/10.1287/mnsc.2021.4020>.
+[doi:10.1287/mnsc.2021.4020](https://doi.org/10.1287/mnsc.2021.4020) .
 
 ## Note
 

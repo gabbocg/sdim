@@ -46,7 +46,7 @@ A data.frame with 516 rows and 71 variables:
 ## Source
 
 He, Huang, Li, Zhou (2023) replication package,
-<https://pubsonline.informs.org/doi/10.1287/mnsc.2022.4563>.
+[doi:10.1287/mnsc.2022.4563](https://doi.org/10.1287/mnsc.2022.4563) .
 
 ## Note
 

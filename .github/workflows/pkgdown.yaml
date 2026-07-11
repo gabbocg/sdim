@@ -8,6 +8,10 @@ on:
 
 name: pkgdown
 
+concurrency:
+  group: pkgdown
+  cancel-in-progress: false
+
 permissions: read-all
 
 jobs:
@@ -23,6 +27,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
       - uses: r-lib/actions/setup-pandoc@v2
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## sdim (development version)
+
+- Reworded the package title to comply with CRAN policy (no longer
+  starts with “An R Package for…”).
+
 ## sdim 0.1.0
 
 CRAN release: 2026-07-11

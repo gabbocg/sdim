@@ -8,15 +8,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/gabbocg/sdim/blob/v0.1.0/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/gabbocg/sdim/blob/main/DESCRIPTION)
 
-Cabrera G (2026). *sdim: An R Package for Supervised Dimension
-Reduction*. R package version 0.1.0, <https://gabbocg.github.io/sdim/>.
+Cabrera G (2026). *sdim: Supervised Dimension Reduction for
+Forecasting*. R package version 0.1.0.9000,
+<https://gabbocg.github.io/sdim/>.
 
     @Manual{,
-      title = {sdim: An R Package for Supervised Dimension Reduction},
+      title = {sdim: Supervised Dimension Reduction for Forecasting},
       author = {Gabriel Cabrera},
       year = {2026},
-      note = {R package version 0.1.0},
+      note = {R package version 0.1.0.9000},
       url = {https://gabbocg.github.io/sdim/},
     }

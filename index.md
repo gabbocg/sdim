@@ -23,10 +23,7 @@ portfolio returns) from the He et al. (2023) replication package.
 
 ``` r
 
-# Install the released version from CRAN
-install.packages("sdim")
-
-# Or the development version from GitHub
+# Install from GitHub (not yet on CRAN)
 # install.packages("devtools")
 devtools::install_github("gabbocg/sdim")
 ```
@@ -162,7 +159,7 @@ summary(fit_spca)
 
 If you encounter a bug, please file an issue with a minimal reproducible
 example on [GitHub](https://github.com/gabbocg/sdim/issues). For
-questions, email <gabriel.cabrera.guz@gmail.com>.
+questions, email <gabriel.cabreraguzman@postgrad.manchester.ac.uk>.
 
 ## References
 

@@ -4,6 +4,8 @@
 **License:** [MIT](https://opensource.org/licenses/MIT) + file [LICENSE](LICENSE)
 
 <!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/sdim)](https://CRAN.R-project.org/package=sdim)
+[![CRAN downloads](https://cranlogs.r-pkg.org/badges/sdim)](https://CRAN.R-project.org/package=sdim)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![R-CMD-check](https://github.com/gabbocg/sdim/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gabbocg/sdim/actions/workflows/R-CMD-check.yaml)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
@@ -17,7 +19,10 @@
 ## Installation
 
 ```r
-# Install from GitHub (not yet on CRAN)
+# Install the released version from CRAN
+install.packages("sdim")
+
+# Or the development version from GitHub
 # install.packages("devtools")
 devtools::install_github("gabbocg/sdim")
 ```
@@ -148,7 +153,7 @@ summary(fit_spca)
 
 ## Getting help
 
-If you encounter a bug, please file an issue with a minimal reproducible example on [GitHub](https://github.com/gabbocg/sdim/issues). For questions, email gabriel.cabreraguzman@postgrad.manchester.ac.uk.
+If you encounter a bug, please file an issue with a minimal reproducible example on [GitHub](https://github.com/gabbocg/sdim/issues). For questions, email gabriel.cabrera.guz@gmail.com.
 
 ## References
 

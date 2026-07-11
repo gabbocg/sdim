@@ -1,7 +1,7 @@
 Package: sdim
 Type: Package
-Title: An R Package for Supervised Dimension Reduction
-Version: 0.1.0
+Title: Supervised Dimension Reduction for Forecasting
+Version: 0.1.0.9000
 Authors@R: c(
     person("Gabriel", "Cabrera",
            email = "gabriel.cabrera.guz@gmail.com",

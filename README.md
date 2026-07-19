@@ -5,7 +5,7 @@
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/sdim)](https://CRAN.R-project.org/package=sdim)
-[![CRAN downloads](https://cranlogs.r-pkg.org/badges/sdim)](https://CRAN.R-project.org/package=sdim)
+[![CRAN downloads](https://cranlogs.r-pkg.org/badges/grand-total/sdim)](https://CRAN.R-project.org/package=sdim)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![R-CMD-check](https://github.com/gabbocg/sdim/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gabbocg/sdim/actions/workflows/R-CMD-check.yaml)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)

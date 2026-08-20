@@ -63,7 +63,9 @@ select_ar_lag_sic <- function(y, h, p_max) {
     } else {
 
       y_lags <- do.call(cbind, lapply(1:p, function(j) {
+
         y_raw[(p_max - (j - 1)):(TT - j - (h - 1))]
+
       }))
       y_lags <- y_lags[seq_len(n), , drop = FALSE]
       ZZ     <- cbind(1, y_lags)
@@ -73,11 +75,13 @@ select_ar_lag_sic <- function(y, h, p_max) {
     a_hat <- solve(crossprod(ZZ), crossprod(ZZ, y_h))
     e_hat <- y_h - ZZ %*% a_hat
     k     <- length(a_hat)
-    sic   <- n * log(sum(e_hat^2) / n) + log(n) * k
+    sic   <- n * log(sum(e_hat ^ 2) / n) + log(n) * k
 
     if (sic < best_sic) {
+
       best_sic <- sic
       best_p   <- p
+      
     }
 
   }
@@ -119,7 +123,9 @@ estimate_ar_res <- function(y, h, p) {
   if (p > 0L) {
 
     y_lags <- do.call(cbind, lapply(1:p, function(j) {
+
       y[(p - (j - 1)):(TT - j - (h - 1))]
+      
     }))
     y_lags <- y_lags[seq_len(length(y_h_dep)), , drop = FALSE]
     ZZ     <- cbind(1, y_lags)
@@ -174,12 +180,16 @@ estimate_ardl_multi <- function(y, z, h, p) {
   n   <- length(y_h)
 
   y_lags <- do.call(cbind, lapply(1:p_max, function(j) {
+
     y[(p_max - (j - 1)):(TT - j - (h - 1))]
+
   }))
   y_lags <- y_lags[seq_len(n), , drop = FALSE]
 
   z_lags <- do.call(cbind, lapply(1:p_max, function(j) {
+
     z[(p_max - (j - 1)):(TT - j - (h - 1)), , drop = FALSE]
+  
   }))
   z_lags <- z_lags[seq_len(n), , drop = FALSE]
 

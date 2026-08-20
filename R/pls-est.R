@@ -44,7 +44,7 @@ pls_est <- function(target, X, nfac) {
     ri  <- sv$u[, 1L, drop = FALSE]    # L x 1  left singular vector
 
     ti     <- G0 %*% ri
-    normti <- sqrt(sum(ti^2))
+    normti <- sqrt(sum(ti ^ 2))
     ti     <- ti / normti
 
     Xloadings[, i] <- drop(crossprod(G0, ti))
@@ -53,14 +53,20 @@ pls_est <- function(target, X, nfac) {
     # Gram-Schmidt orthogonalise new X-loading against previous ones
     vi <- Xloadings[, i, drop = FALSE]
     if (i > 1L) {
+
       for (rep_idx in 1:2) {
+
         for (j in seq_len(i - 1L)) {
+
           vj <- V[, j, drop = FALSE]
           vi <- vi - vj * drop(crossprod(vj, vi))
+
         }
+
       }
+
     }
-    vi       <- vi / sqrt(sum(vi^2))
+    vi       <- vi / sqrt(sum(vi ^ 2))
     V[, i]   <- drop(vi)
 
     # Deflate cross-covariance
@@ -74,8 +80,8 @@ pls_est <- function(target, X, nfac) {
   factors   <- G %*% Weights               # T x K
   lambda    <- crossprod(G, factors) / T_obs   # L x K  (G-space loadings)
   residuals <- G - factors %*% t(lambda)       # T x L
-  ve2       <- rowMeans(residuals^2)
-  eigvals   <- colSums(factors^2)
+  ve2       <- rowMeans(residuals ^ 2)
+  eigvals   <- colSums(factors ^ 2)
 
   structure(
     list(method = "pls", factors = factors, lambda = lambda,

@@ -103,5 +103,7 @@ print.sdim_eval <- function(x, ...) {
 
 #' @export
 `[.sdim_eval` <- function(x, i) {
+
   unclass(x)[i]
+  
 }

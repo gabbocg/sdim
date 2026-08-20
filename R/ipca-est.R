@@ -92,27 +92,35 @@ ipca_est <- function(ret, Z, nfac, max_iter = 100, tol = 1e-6,
   # Check NAs mirror between ret and Z
   na_ret <- is.na(ret)
   for (l in seq_len(n_char)) {
+
     if (!identical(na_ret, is.na(Z[, , l])))
       stop(
         "NAs in `Z` must mirror NAs in `ret` (same positions).",
         call. = FALSE
       )
+
   }
 
   # Build per-period lists; validate N_t >= K
   ret_list <- vector("list", t_obs)
   z_list   <- vector("list", t_obs)
   for (t in seq_len(t_obs)) {
+
     obs <- which(!is.na(ret[t, ]))
+
     if (length(obs) < nfac) {
+
       msg <- sprintf(
         "Time period %d has %d observed assets, fewer than nfac = %d.",
         t, length(obs), nfac
       )
       stop(msg, call. = FALSE)
+
     }
+
     ret_list[[t]] <- ret[t, obs]
     z_list[[t]]   <- matrix(Z[t, obs, ], nrow = length(obs), ncol = n_char)
+
   }
 
   # --- Call Rcpp ALS ---
@@ -129,10 +137,13 @@ ipca_est <- function(ret, Z, nfac, max_iter = 100, tol = 1e-6,
     )
 
   if (factor_mean == "constant") {
+
     extra$mu <- colMeans(res[["F"]])
+
   }
 
   if (factor_mean == "VAR1") {
+
     f_mat <- res[["F"]]
     if (nrow(f_mat) <= nfac + 1L)
       stop(
@@ -146,12 +157,15 @@ ipca_est <- function(ret, Z, nfac, max_iter = 100, tol = 1e-6,
     b_hat <- tryCatch(
       solve(xtx, xty),
       error = function(e) {
+
         solve(xtx + 1e-8 * diag(nrow(xtx)), xty)
+
       }
     )
     extra$var_intercept <- b_hat[1L, ]
     extra$var_coef      <- b_hat[-1L, , drop = FALSE]
     extra$var_resid     <- y_mat - x_mat %*% b_hat
+
   }
 
   structure(
@@ -165,4 +179,5 @@ ipca_est <- function(ret, Z, nfac, max_iter = 100, tol = 1e-6,
       extra),
     class = "sdim_fit"
   )
+  
 }

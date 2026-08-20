@@ -2,6 +2,8 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 ipca_als_cpp <- function(ret_list, Z_list, K, max_iter, tol) {
+
     .Call(`_sdim_ipca_als_cpp`, ret_list, Z_list, K, max_iter, tol)
+    
 }
 

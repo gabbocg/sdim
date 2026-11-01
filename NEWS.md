@@ -1,5 +1,8 @@
 # sdim (development version)
 
+* Added the missing `tests/testthat.R`, so `R CMD check` now runs the test
+  suite.
+
 * Reworded the package title to comply with CRAN policy (no longer starts
   with "An R Package for...").
 

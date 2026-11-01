@@ -107,7 +107,7 @@ test_that("eval_factors works unchanged on ipca output", {
   set.seed(42)
   ret <- matrix(rnorm(60 * 12) / 100, 60, 12)
   Z   <- array(rnorm(60 * 12 * 4), dim = c(60, 12, 4))
-  fit <- ipca_est(ret, Z, nfac = 2)
+  fit <- suppressWarnings(ipca_est(ret, Z, nfac = 2)) # pure noise: ALS need not converge
   expect_no_error(eval_factors(ret = ret, factors = fit$factors))
 })
 

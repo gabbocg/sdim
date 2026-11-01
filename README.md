@@ -10,6 +10,7 @@
 [![R-CMD-check](https://github.com/gabbocg/sdim/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gabbocg/sdim/actions/workflows/R-CMD-check.yaml)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![pkgdown](https://github.com/gabbocg/sdim/actions/workflows/pkgdown.yaml/badge.svg)](https://gabbocg.github.io/sdim/)
+[![Codecov test coverage](https://codecov.io/gh/gabbocg/sdim/graph/badge.svg)](https://app.codecov.io/gh/gabbocg/sdim)
 <!-- badges: end -->
 
 ## Overview

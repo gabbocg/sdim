@@ -24,3 +24,7 @@ tests/testthat/Rplots.pdf
 /inst/specs/
 /inst/replications/*
 /refs/
+
+# Rendered vignettes
+vignettes/*.html
+vignettes/*.R
